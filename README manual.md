@@ -10,6 +10,7 @@ base_path: /web
 tags:
     - openenv
 ---
+<!-- markdownlint-disable MD025 -->
 # Rag Optimizer Environment
 
 A reinforcement learning environment for optimizing Retrieval-Augmented Generation (RAG) parameters such as `<span>chunk_size</span>` and `<span>top_k</span>`.
@@ -34,15 +35,16 @@ The simplest way to use the Rag Optimizer environment is through the `RagOptimiz
 from rag_optimizer 
 import RagOptimizerAction, RagOptimizerEnv 
 try: 
-	env = RagOptimizerEnv.from_docker_image("rag_optimizer-env:latest") 
-	result = env.reset() print(result.observation.message) 
-	for _ in range(5): 
-		action = RagOptimizerAction(chunk_size=300, top_k=5) 
-		result = env.step(action) 
-		print(result.observation.message) 
-		print("Reward:", result.reward) 
+    env = RagOptimizerEnv.from_docker_image("rag_optimizer-env:latest") 
+    result = env.reset()
+    print(result.observation.message)
+    for _ in range(5): 
+        action = RagOptimizerAction(chunk_size=300, top_k=5) 
+        result = env.step(action) 
+        print(result.observation.message) 
+        print("Reward:", result.reward) 
 finally: 
-	env.close()
+    env.close()
 ```
 
 ## Environment Details
@@ -51,15 +53,15 @@ finally:
 
 **RagOptimizerAction**: The agent optimizes retrieval by adjusting:
 
-- `chunk_size` (int): Size of text segments (Optimal: 300)
-- `top_k` (int): Number of documents to retrieve (Optimal: 5)
+* `chunk_size` (int): Size of text segments (Optimal: 300)
+* `top_k` (int): Number of documents to retrieve (Optimal: 5)
 
 ### Observation
 
 **RagOptimizerObservation**: Returns the result of the retrieval strategy:
 
-- `retrieval_score` (float): Accuracy score from 0.0 to 1.0.
-- `message` (str): Feedback on the current step.
+* `retrieval_score` (float): Accuracy score from 0.0 to 1.0.
+* `message` (str): Feedback on the current step.
 
 ### Reward
 
@@ -67,16 +69,16 @@ The reward is a proximity-based score. A perfect match of (300, 5) returns a rew
 
 The reward is based on how close the action is to a hidden optimal configuration.
 
-#### ✅ Enhancements:
+#### ✅ Enhancements
 
 * Dynamic optimal values per episode (not fixed)
 * Noise added to simulate real retrieval uncertainty
 * Penalization for large parameter jumps
 * Stateful updates across steps
 
-#### Example Logic:
+#### Example Logic
 
-```
+```python
 size_err = abs(action.chunk_size - optimal_chunk) / 700
 k_err = abs(action.top_k - optimal_k) / 5
 
@@ -100,7 +102,7 @@ An episode ends when:
 
 ### Recommended (Development)
 
-```
+```bash
 uvicorn server.app:app --reload
 ```
 
@@ -113,13 +115,13 @@ Access:
 
 Do **NOT** use:
 
-```
+```text
 http://0.0.0.0:8000
 ```
 
 Use:
 
-```
+```text
 http://localhost:8000
 ```
 
@@ -127,13 +129,13 @@ http://localhost:8000
 
 ### Reset
 
-```
+```http
 POST /reset
 ```
 
 Response:
 
-```
+```json
 {
   "observation": {
     "retrieval_score": 0,
@@ -146,13 +148,13 @@ Response:
 
 ### Step
 
-```
+```http
 POST /step
 ```
 
 Request:
 
-```
+```json
 {
   "action": {
     "chunk_size": 300,
@@ -161,14 +163,12 @@ Request:
 }
 ```
 
-
-
 That's it! The `RagOptimizerEnv.from_docker_image()` method handles:
 
-- Starting the Docker container
-- Waiting for the server to be ready
-- Connecting to the environment
-- Container cleanup when you call `close()`
+* Starting the Docker container
+* Waiting for the server to be ready
+* Connecting to the environment
+* Container cleanup when you call `close()`
 
 ## Building the Docker Image
 
@@ -199,14 +199,14 @@ The `openenv push` command will:
 
 ### Prerequisites
 
-- Authenticate with Hugging Face: The command will prompt for login if not already authenticated
+* Authenticate with Hugging Face: The command will prompt for login if not already authenticated
 
 ### Options
 
-- `--directory`, `-d`: Directory containing the OpenEnv environment (defaults to current directory)
-- `--repo-id`, `-r`: Repository ID in format 'username/repo-name' (defaults to 'username/env-name' from openenv.yaml)
-- `--base-image`, `-b`: Base Docker image to use (overrides Dockerfile FROM)
-- `--private`: Deploy the space as private (default: public)
+* `--directory`, `-d`: Directory containing the OpenEnv environment (defaults to current directory)
+* `--repo-id`, `-r`: Repository ID in format 'username/repo-name' (defaults to 'username/env-name' from openenv.yaml)
+* `--base-image`, `-b`: Base Docker image to use (overrides Dockerfile FROM)
+* `--private`: Deploy the space as private (default: public)
 
 ### Examples
 
@@ -232,10 +232,10 @@ After deployment, your space will be available at:
 
 The deployed space includes:
 
-- **Web Interface** at `/web` - Interactive UI for exploring the environment
-- **API Documentation** at `/docs` - Full OpenAPI/Swagger interface
-- **Health Check** at `/health` - Container health monitoring
-- **WebSocket** at `/ws` - Persistent session endpoint for low-latency interactions
+* **Web Interface** at `/web` - Interactive UI for exploring the environment
+* **API Documentation** at `/docs` - Full OpenAPI/Swagger interface
+* **Health Check** at `/health` - Container health monitoring
+* **WebSocket** at `/ws` - Persistent session endpoint for low-latency interactions
 
 ## Advanced Usage
 
@@ -275,9 +275,9 @@ with RagOptimizerEnv(base_url="http://localhost:8000") as env:
 
 The client uses WebSocket connections for:
 
-- **Lower latency**: No HTTP connection overhead per request
-- **Persistent session**: Server maintains your environment state
-- **Efficient for episodes**: Better for many sequential steps
+* **Lower latency**: No HTTP connection overhead per request
+* **Persistent session**: Server maintains your environment state
+* **Efficient for episodes**: Better for many sequential steps
 
 ### Concurrent WebSocket Sessions
 
@@ -325,10 +325,10 @@ python3 server/rag_optimizer_environment.py
 
 This verifies that:
 
-- Environment resets correctly
-- Step executes actions properly
-- State tracking works
-- Rewards are calculated correctly
+* Environment resets correctly
+* Step executes actions properly
+* State tracking works
+* Rewards are calculated correctly
 
 ### Running Locally
 
@@ -338,7 +338,7 @@ Run the server locally for development:
 uvicorn server.app:app --reload
 ```
 
-    OR
+OR
 
 ```bash
 python server/rag_optimizer_environment.py
@@ -346,7 +346,7 @@ python server/rag_optimizer_environment.py
 
 ## Project Structure
 
-```
+```text
 rag_optimizer/
 ├── .dockerignore         # Docker build exclusions
 ├── __init__.py            # Module exports
@@ -379,3 +379,5 @@ It is now a  **mini RL environment for RAG optimization** , suitable for:
 * Research experiments
 * ML system design practice
 * Real-world retrieval tuning
+
+<!-- markdownlint-enable MD025 -->

@@ -75,12 +75,17 @@ app = create_app(
     For production deployments, consider using uvicorn directly with
     multiple workers:
         uvicorn rag_optimizer.server.app:app --workers 4
-    """
+"""
 
-import uvicorn
+def main(host: str = "0.0.0.0", port: int = 8000):
+    import uvicorn
 
-def main():
-    uvicorn.run("server.app:app", host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=host, port=port)
+
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8000)
+    args = parser.parse_args()
+    main(port=args.port)
