@@ -60,7 +60,7 @@ app = create_app(
     max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
 )
 
-    """
+"""
     Entry point for direct execution via uv run or python -m.
 
     This function enables running the server without Docker:

@@ -1,3 +1,20 @@
+# Environments
 .venv/
-__pycache__/
+env/
+venv/
+ENV/
+
+# Python internals
+**/__pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Distribution / Build
+dist/
+build/
+*.egg-info/
+
+# Local configuration
+.env
+openenv.yaml  # Only ignore this if it contains secrets/API keys
