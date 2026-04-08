@@ -60,8 +60,6 @@ app = create_app(
     max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
 )
 
-
-def main(host: str = "0.0.0.0", port: int = 8000):
     """
     Entry point for direct execution via uv run or python -m.
 
@@ -78,14 +76,11 @@ def main(host: str = "0.0.0.0", port: int = 8000):
     multiple workers:
         uvicorn rag_optimizer.server.app:app --workers 4
     """
-    import uvicorn
 
-    uvicorn.run("server.app:app", host=host, port=port)
+import uvicorn
 
+def main():
+    uvicorn.run("server.app:app", host="0.0.0.0", port=8000)
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=8000)
-    args = parser.parse_args()
-    main(port=args.port)
+    main()
