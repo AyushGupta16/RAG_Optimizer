@@ -5,7 +5,7 @@ from openai import OpenAI
 # Mandatory Environment Variables
 API_BASE = os.getenv("API_BASE_URL", "http://localhost:8000")
 MODEL_NAME = os.getenv("MODEL_NAME", "rag-optimizer-v1")
-HF_TOKEN = os.getenv("HF_TOKEN", "dummy_token")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 def log_start(task: str, env: str, model: str):
     print(f"[START] task={task} env={env} model={model}", flush=True)
@@ -19,7 +19,13 @@ def log_end(success: bool, steps: int, rewards: list):
     rewards_str = ",".join([f"{r:.2f}" for r in rewards])
     print(f"[END] success={success_str} steps={steps} rewards={rewards_str}", flush=True)
 
+client = OpenAI(
+    base_url=API_BASE,
+    api_key=HF_TOKEN # Use the HF_TOKEN as the API Key for the client
+)
+
 def main():
+
     # Setup
     task = "optimal_rag"
     env_name = "rag_optimizer"
