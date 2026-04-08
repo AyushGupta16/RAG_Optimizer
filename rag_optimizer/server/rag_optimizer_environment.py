@@ -6,18 +6,30 @@ class RagOptimizerEnvironment(Environment):
     def __init__(self):
         self._state = RagOptimizerState()
 
-    def reset(self, seed=None, episode_id=None, **kwargs) -> RagOptimizerObservation:
+    def reset(self, seed=None, episode_id=None, task_id=None, **kwargs) -> RagOptimizerObservation:
+        # Define target scores based on the task_id from openenv.yaml
+        task_targets = {
+            "baseline_retrieval": 0.5,
+            "parameter_tuning": 0.7,
+            "optimal_rag": 0.85
+        }
+        
+        # Default to the hardest task if no ID is provided
+        target = task_targets.get(task_id, 0.85)
+        
         self._state = RagOptimizerState(
             episode_id=episode_id or str(uuid.uuid4()),
-            step_count=0
+            step_count=0,
+            target_score=target  # Dynamically set based on task
         )
+        
         return RagOptimizerObservation(
             done=False,
             reward=0.0,
             retrieval_score=0.0,
-            message="Find the optimal chunk_size and top_k for the dataset."
+            message=f"Task {task_id or 'optimal_rag'} initialized. Target score: {target}"
         )
-
+    
     def step(self, action: RagOptimizerAction, **kwargs) -> RagOptimizerObservation:
         self._state.step_count += 1
         
