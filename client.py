@@ -54,8 +54,10 @@ class RagOptimizerEnv(
         Returns:
             Dictionary representation suitable for JSON encoding
         """
+        # Match models.py: chunk_size and top_k
         return {
-            "message": action.message,
+            "chunk_size": action.chunk_size,
+            "top_k": action.top_k,
         }
 
     def _parse_result(self, payload: Dict) -> StepResult[RagOptimizerObservation]:
@@ -69,17 +71,15 @@ class RagOptimizerEnv(
             StepResult with RagOptimizerObservation
         """
         obs_data = payload.get("observation", {})
+        # Match models.py: retrieval_score and message
         observation = RagOptimizerObservation(
-            echoed_message=obs_data.get("echoed_message", ""),
-            message_length=obs_data.get("message_length", 0),
-            done=payload.get("done", False),
-            reward=payload.get("reward"),
-            metadata=obs_data.get("metadata", {}),
+            retrieval_score=obs_data.get("retrieval_score", 0.0),
+            message=obs_data.get("message", ""),
         )
 
         return StepResult(
             observation=observation,
-            reward=payload.get("reward"),
+            reward=payload.get("reward", 0.0),
             done=payload.get("done", False),
         )
 
