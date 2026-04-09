@@ -12,12 +12,12 @@ Retrieval-Augmented Generation systems are highly sensitive to hyperparameters l
 
 Most systems:
 
-* Use static heuristics ❌
-* Require manual tuning ❌
+* Use static heuristics (no)
+* Require manual tuning (no)
 
 This project introduces a  **learning-based approach** :
 
-> 🎯 Treat RAG tuning as a **reinforcement learning problem**
+> Treat RAG tuning as a **reinforcement learning problem**
 
 ---
 
@@ -34,19 +34,19 @@ This project introduces a  **learning-based approach** :
 
 ```text
 Agent (RL / LLM / Heuristic)
-        ↓
+        v
    Action (chunk_size, top_k)
-        ↓
+        v
 RAG Optimizer Environment (FastAPI + OpenEnv)
-        ↓
+        v
    Reward + Observation
-        ↓
+        v
 Agent learns optimal policy
 ```
 
 ---
 
-## ⚙️ Core Features
+## Core Features
 
 ### RL Environment Design
 
@@ -95,13 +95,13 @@ with RagOptimizerEnv(base_url="http://localhost:8000") as env:
 
 ## API Overview
 
-### 🔹 Reset Environment
+### Reset Environment
 
 ```http
 POST /reset
 ```
 
-### 🔹 Take Action
+### Take Action
 
 ```http
 POST /step
@@ -128,7 +128,7 @@ cd rag-optimizer
 uvicorn server.app:app --reload
 ```
 
-👉 Open: [http://localhost:8000/docs](http://localhost:8000/docs)
+Open: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
@@ -145,17 +145,17 @@ uvicorn server.app:app --reload
 
 ## Future Scope
 
-* 🔗 Integrate real vector DB (FAISS, Chroma)
-* 📊 Use real metrics (Recall@k, MRR, nDCG)
-* 🤖 Train RL agents (PPO, DQN)
-* 🧠 LLM-based auto-tuning agents
-* 📦 Plug into production RAG pipelines
+* Integrate real vector DB (FAISS, Chroma)
+* Use real metrics (Recall@k, MRR, nDCG)
+* Train RL agents (PPO, DQN)
+* LLM-based auto-tuning agents
+* Plug into production RAG pipelines
 
 ---
 
 ## What Makes This Stand Out
 
-* Not just ML — **ML Systems + RL + Backend Engineering**
+* Not just ML - **ML Systems + RL + Backend Engineering**
 * Real-world problem (RAG optimization)
 * Clean abstraction for experimentation
 * Extendable to production-scale pipelines
@@ -178,8 +178,8 @@ uvicorn server.app:app --reload
 
 ---
 
-## ⭐ If you like this project
+## If you like this project
 
-Give it a star ⭐ and feel free to contribute!
+Give it a star and feel free to contribute!
 
 ---

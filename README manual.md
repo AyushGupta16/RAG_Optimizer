@@ -1,6 +1,6 @@
 ---
 title: Rag Optimizer Environment Server
-emoji: 🎪
+emoji: server
 colorFrom: red
 colorTo: indigo
 sdk: docker
@@ -11,6 +11,7 @@ tags:
     - openenv
 ---
 <!-- markdownlint-disable MD025 -->
+
 # Rag Optimizer Environment
 
 A reinforcement learning environment for optimizing Retrieval-Augmented Generation (RAG) parameters such as `<span>chunk_size</span>` and `<span>top_k</span>`.
@@ -69,7 +70,7 @@ The reward is a proximity-based score. A perfect match of (300, 5) returns a rew
 
 The reward is based on how close the action is to a hidden optimal configuration.
 
-#### ✅ Enhancements
+#### Enhancements
 
 * Dynamic optimal values per episode (not fixed)
 * Noise added to simulate real retrieval uncertainty
@@ -108,8 +109,8 @@ uvicorn server.app:app --reload
 
 Access:
 
-* API Docs → [http://localhost:8000/docs](http://localhost:8000/docs)
-* Web UI → [http://localhost:8000/web](http://localhost:8000/web)
+* API Docs -> [http://localhost:8000/docs](http://localhost:8000/docs)
+* Web UI -> [http://localhost:8000/web](http://localhost:8000/web)
 
 ### Important Note
 
@@ -348,19 +349,19 @@ python server/rag_optimizer_environment.py
 
 ```text
 rag_optimizer/
-├── .dockerignore         # Docker build exclusions
-├── __init__.py            # Module exports
-├── README.md              # This file
-├── openenv.yaml           # OpenEnv manifest
-├── pyproject.toml         # Project metadata and dependencies
-├── uv.lock                # Locked dependencies (generated)
-├── client.py              # RagOptimizerEnv client
-├── models.py              # Action and Observation models
-└── server/
-    ├── __init__.py        # Server module exports
-    ├── rag_optimizer_environment.py  # Core environment logic
-    ├── app.py             # FastAPI application (HTTP + WebSocket endpoints)
-    └── Dockerfile         # Container image definition
+|-- .dockerignore         # Docker build exclusions
+|-- __init__.py            # Module exports
+|-- README.md              # This file
+|-- openenv.yaml           # OpenEnv manifest
+|-- pyproject.toml         # Project metadata and dependencies
+|-- uv.lock                # Locked dependencies (generated)
+|-- client.py              # RagOptimizerEnv client
+|-- models.py              # Action and Observation models
+\-- server/
+    |-- __init__.py        # Server module exports
+    |-- rag_optimizer_environment.py  # Core environment logic
+    |-- app.py             # FastAPI application (HTTP + WebSocket endpoints)
+    \-- Dockerfile         # Container image definition
 ```
 
 ## Future Improvements
