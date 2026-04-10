@@ -8,6 +8,8 @@ class RagOptimizerAction(Action):
 class RagOptimizerObservation(Observation):
     retrieval_score: float 
     message: str
+    reward: float = 0.0      
+    done: bool = False 
 
 class RagOptimizerState(State):
     current_chunk_size: int = 500
