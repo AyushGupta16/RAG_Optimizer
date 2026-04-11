@@ -1,5 +1,7 @@
+import math
 import os
 import uuid
+import math
 from openai import OpenAI
 from models import RagOptimizerAction, RagOptimizerObservation, RagOptimizerState
 from openenv.core.env_server import Environment
@@ -73,8 +75,9 @@ class RagOptimizerEnvironment(Environment):
         k_err = abs(action.top_k - 5) / 5
         score = max(0.0, 1.0 - (size_err + k_err) / 2)
         
-        # CRITICAL: Clamp to (0.01, 0.99) to avoid exact boundaries
-        score = max(0.01, min(0.99, score))
+        #
+        raw = 1.0 - (size_err + k_err) / 2
+        score = 1 / (1 + math.exp(-6 * (raw - 0.5)))
 
         done = self._state.step_count >= 10 or score >= self._state.target_score
         reward = float(score) 
