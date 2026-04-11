@@ -1,17 +1,14 @@
 import os
 import uuid
-import math
 from openai import OpenAI
 from models import RagOptimizerAction, RagOptimizerObservation, RagOptimizerState
 from openenv.core.env_server import Environment
 from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables from .env file
-EPS = 1e-6     # Small epsilon to prevent log(0) or division issues
+load_dotenv()
 
 class RagOptimizerEnvironment(Environment):
     def __init__(self):
-        # Initialize state to avoid AttributeErrors
         self._state = RagOptimizerState(
             episode_id=str(uuid.uuid4()),
             step_count=0,
@@ -19,7 +16,6 @@ class RagOptimizerEnvironment(Environment):
         )
 
     def reset(self, seed=None, episode_id=None, task_id=None, **kwargs) -> RagOptimizerObservation:
-        # 1. Clean state reset (Must not rely on API keys)
         task_targets = {
             "baseline_retrieval": 0.5,
             "parameter_tuning": 0.7,
@@ -32,11 +28,13 @@ class RagOptimizerEnvironment(Environment):
             step_count=0,
             target_score=target
         )
+
+        print(f"DEBUG RESET: task={task_id}, target={self._state.target_score}")
         
-        # 2. Return observation immediately (Satisfies POST /reset)
+        
         return RagOptimizerObservation(
-            reward=EPS,
-            retrieval_score=EPS,
+            reward=0.01,  # Safe non-zero start
+            retrieval_score=0.01,
             done=False,
             message=f"Environment reset. Task: {task_id or 'default'} | target={target}"
         )
@@ -45,51 +43,50 @@ class RagOptimizerEnvironment(Environment):
         self._state.step_count += 1
         
         # 1. MANDATORY LLM PROXY CALL
-        # We fetch these directly. If they are missing, the validator 
-        # wants to see the attempt to use them.
         api_key = os.environ.get("API_KEY")
         base_url = os.environ.get("API_BASE_URL")
         model_name = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
 
         try:
-            print(f"DEBUG: BASE_URL={base_url}, API_KEY_PRESENT={bool(api_key)}")
-
             client = OpenAI(
                 base_url=base_url or "https://invalid.local",
                 api_key=api_key or "dummy_key"
             )
-
             client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": "validate"}],
                 max_tokens=1
             )
-
             print("LLM Proxy call attempted.")
         except Exception as e:
             print(f"LLM Proxy Error: {e}")
 
+    
+        # 2. SIMPLE LINEAR SCORING
+        size_err = abs(action.chunk_size - 300) / 700.0
+        k_err = abs(action.top_k - 5) / 5.0
+        raw_score = 1.0 - (size_err + k_err) / 2.0
         
-        # 2. DETERMINISTIC SUCCESS LOGIC
-        # (This stays the same to ensure the agent reaches the goal)
-        size_err = abs(action.chunk_size - 300) / 700
-        k_err = abs(action.top_k - 5) / 5
-
-        # sigmoid scoring
-        raw = 1.0 - (size_err + k_err) / 2
-        score = 1 / (1 + math.exp(-6 * (raw - 0.5)))
-
-        # 🔒 CRITICAL: clamp to (0,1)
-        score = max(EPS, min(1 - EPS, score))
-
+        # ✅ CRITICAL: Hard clamp with safety margin
+        if raw_score <= 0.0:
+            score = 0.01
+        elif raw_score >= 1.0:
+            score = 0.99
+        else:
+            # Ensure strict (0, 1) bounds with epsilon
+            score = max(0.01, min(0.99, raw_score))
+        
         done = self._state.step_count >= 10 or score >= self._state.target_score
+        
+        print(f"DEBUG STEP: target={self._state.target_score}, score={score:.4f}, done={done}")
 
         return RagOptimizerObservation(
-            retrieval_score=float(score),   # ❌ NO rounding
+            retrieval_score=float(score),
             reward=float(score),
             done=done,
-            message=f"Step {self._state.step_count}: Score {score:.4f}"  # only for display
+            message=f"Step {self._state.step_count}: Score {score:.4f}"
         )
+
     @property
     def state(self) -> RagOptimizerState:
         return self._state

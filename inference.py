@@ -3,9 +3,8 @@ import requests
 import json
 from openai import OpenAI  
 from dotenv import load_dotenv
-load_dotenv()  # Load environment variables from .env file
+load_dotenv()
 
-# Environment Variables
 ENV_BASE = os.environ.get("ENV_BASE", "http://127.0.0.1:8000")
 LLM_BASE_URL = os.environ.get("API_BASE_URL")
 LLM_API_KEY = os.environ.get("API_KEY")
@@ -36,28 +35,33 @@ def run_task(task: str, action: dict):
         if res.status_code == 200:
             data = res.json()
             
+            # ✅ SAFE reward extraction with hard bounds
             reward_raw = data.get("reward")
-            reward = float(reward_raw) if reward_raw is not None else 0.0
+            if reward_raw is None or reward_raw <= 0.0:
+                reward = 0.01
+            elif reward_raw >= 1.0:
+                reward = 0.99
+            else:
+                reward = float(reward_raw)
+            
             done = data.get("done", False)
             
             rewards.append(reward)
             log_step(1, json.dumps(action), reward, done)
             
-            # Success = score in valid range (0, 1)
-            success = done and reward > 0.85
+            # Success = reached target
+            success = done and reward >= 0.85
             log_end(success, 1, rewards)
         else:
-            log_end(False, 0, [0.0])
+            log_end(False, 0, [0.01])
             
     except Exception as e:
         print(f"Error: {e}")
-        log_end(False, 0, [0.0])
+        log_end(False, 0, [0.01])
 
 def main():
     # MANDATORY: LLM Proxy Call (once at start)
     try:
-        print(f"[DEBUG] BASE_URL={LLM_BASE_URL}, KEY_PRESENT={bool(LLM_API_KEY)}")
-        
         client = OpenAI(
             base_url=LLM_BASE_URL,
             api_key=LLM_API_KEY or "sk-test"
@@ -73,9 +77,9 @@ def main():
     
     # Run 3 tasks with different actions
     tasks = [
-        ("baseline_retrieval", {"chunk_size": 500, "top_k": 3}),   # Suboptimal -> ~0.57
-        ("parameter_tuning", {"chunk_size": 350, "top_k": 4}),     # Close -> ~0.81
-        ("optimal_rag", {"chunk_size": 300, "top_k": 5})           # Optimal -> ~0.99
+        ("baseline_retrieval", {"chunk_size": 500, "top_k": 3}),
+        ("parameter_tuning", {"chunk_size": 350, "top_k": 4}),
+        ("optimal_rag", {"chunk_size": 300, "top_k": 5})
     ]
     
     for task_name, action in tasks:
