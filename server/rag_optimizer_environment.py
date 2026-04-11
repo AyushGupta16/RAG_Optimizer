@@ -75,7 +75,7 @@ class RagOptimizerEnvironment(Environment):
         k_err = abs(action.top_k - 5) / 5
         score = max(0.0, 1.0 - (size_err + k_err) / 2)
         
-        #
+        #Replace score line with sigmoid scaling
         raw = 1.0 - (size_err + k_err) / 2
         score = 1 / (1 + math.exp(-6 * (raw - 0.5)))
 
