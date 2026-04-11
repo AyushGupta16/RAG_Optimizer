@@ -33,10 +33,11 @@ class RagOptimizerEnvironment(Environment):
         )
         
         # 2. Return observation immediately (Satisfies POST /reset)
+        EPS = 1e-6
         return RagOptimizerObservation(
+            reward=EPS,
+            retrieval_score=EPS,
             done=False,
-            reward=0.0,
-            retrieval_score=0.0,
             message=f"Environment reset. Task: {task_id or 'default'} | target={target}"
         )
 
@@ -68,25 +69,28 @@ class RagOptimizerEnvironment(Environment):
         except Exception as e:
             print(f"LLM Proxy Error: {e}")
 
+        
         # 2. DETERMINISTIC SUCCESS LOGIC
         # (This stays the same to ensure the agent reaches the goal)
         size_err = abs(action.chunk_size - 300) / 700
         k_err = abs(action.top_k - 5) / 5
-        
-        #Replace score line with sigmoid scaling
+
+        # sigmoid scoring
         raw = 1.0 - (size_err + k_err) / 2
         score = 1 / (1 + math.exp(-6 * (raw - 0.5)))
 
+        # 🔒 CRITICAL: clamp to (0,1)
+        EPS = 1e-6
+        score = max(EPS, min(1 - EPS, score))
+
         done = self._state.step_count >= 10 or score >= self._state.target_score
-        reward = float(score) 
 
         return RagOptimizerObservation(
-            retrieval_score=round(float(score), 2),
-            reward=float(reward),
+            retrieval_score=float(score),   # ❌ NO rounding
+            reward=float(score),
             done=done,
-            message=f"Step {self._state.step_count}: Score {round(score, 2)}"
+            message=f"Step {self._state.step_count}: Score {score:.4f}"  # only for display
         )
-
     @property
     def state(self) -> RagOptimizerState:
         return self._state
