@@ -10,6 +10,13 @@ LLM_BASE_URL = os.environ.get("API_BASE_URL")
 LLM_API_KEY = os.environ.get("API_KEY")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
+# Must match server/rag_optimizer_environment.py task_targets (per-task success bar)
+TASK_TARGETS = {
+    "baseline_retrieval": 0.5,
+    "parameter_tuning": 0.7,
+    "optimal_rag": 0.85,
+}
+
 def log_start(task: str, env: str, model: str):
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
@@ -49,8 +56,8 @@ def run_task(task: str, action: dict):
             rewards.append(reward)
             log_step(1, json.dumps(action), reward, done)
             
-            # Success = reached target
-            success = done and reward >= 0.85
+            target = TASK_TARGETS.get(task, 0.85)
+            success = done and reward >= target
             log_end(success, 1, rewards)
         else:
             log_end(False, 0, [0.01])

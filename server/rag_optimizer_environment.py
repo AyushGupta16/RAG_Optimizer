@@ -8,11 +8,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class RagOptimizerEnvironment(Environment):
+    # ✅ Class-level state storage (persists across instance creation)
+    _current_target = 0.85
+    _current_episode_id = None
+    _current_step_count = 0
+    
     def __init__(self):
         self._state = RagOptimizerState(
-            episode_id=str(uuid.uuid4()),
-            step_count=0,
-            target_score=0.85
+            episode_id=RagOptimizerEnvironment._current_episode_id or str(uuid.uuid4()),
+            step_count=RagOptimizerEnvironment._current_step_count,
+            target_score=RagOptimizerEnvironment._current_target
         )
 
     def reset(self, seed=None, episode_id=None, task_id=None, **kwargs) -> RagOptimizerObservation:
@@ -23,24 +28,36 @@ class RagOptimizerEnvironment(Environment):
         }
         target = task_targets.get(task_id, 0.85)
         
+        # ✅ Update class-level state
+        RagOptimizerEnvironment._current_target = target
+        RagOptimizerEnvironment._current_episode_id = episode_id or str(uuid.uuid4())
+        RagOptimizerEnvironment._current_step_count = 0
+        
+        # Update instance state
         self._state = RagOptimizerState(
-            episode_id=episode_id or str(uuid.uuid4()),
+            episode_id=RagOptimizerEnvironment._current_episode_id,
             step_count=0,
             target_score=target
         )
-
-        print(f"DEBUG RESET: task={task_id}, target={self._state.target_score}")
         
+        print(f"DEBUG RESET: task={task_id}, target={target}")
         
         return RagOptimizerObservation(
-            reward=0.01,  # Safe non-zero start
+            reward=0.01,
             retrieval_score=0.01,
             done=False,
             message=f"Environment reset. Task: {task_id or 'default'} | target={target}"
         )
 
     def step(self, action: RagOptimizerAction, **kwargs) -> RagOptimizerObservation:
+        # ✅ Restore state from class variables (in case new instance was created)
+        self._state.target_score = RagOptimizerEnvironment._current_target
+        self._state.episode_id = RagOptimizerEnvironment._current_episode_id
+        self._state.step_count = RagOptimizerEnvironment._current_step_count
+        
+        # Increment step
         self._state.step_count += 1
+        RagOptimizerEnvironment._current_step_count = self._state.step_count
         
         # 1. MANDATORY LLM PROXY CALL
         api_key = os.environ.get("API_KEY")
@@ -61,21 +78,20 @@ class RagOptimizerEnvironment(Environment):
         except Exception as e:
             print(f"LLM Proxy Error: {e}")
 
-    
-        # 2. SIMPLE LINEAR SCORING
+        # 2. SCORING LOGIC
         size_err = abs(action.chunk_size - 300) / 700.0
         k_err = abs(action.top_k - 5) / 5.0
         raw_score = 1.0 - (size_err + k_err) / 2.0
         
-        # ✅ CRITICAL: Hard clamp with safety margin
+        # Clamp to (0.01, 0.99)
         if raw_score <= 0.0:
             score = 0.01
         elif raw_score >= 1.0:
             score = 0.99
         else:
-            # Ensure strict (0, 1) bounds with epsilon
             score = max(0.01, min(0.99, raw_score))
         
+        # Done logic with correct target
         done = self._state.step_count >= 10 or score >= self._state.target_score
         
         print(f"DEBUG STEP: target={self._state.target_score}, score={score:.4f}, done={done}")
