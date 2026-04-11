@@ -1,4 +1,3 @@
-import math
 import os
 import uuid
 import math
@@ -73,7 +72,6 @@ class RagOptimizerEnvironment(Environment):
         # (This stays the same to ensure the agent reaches the goal)
         size_err = abs(action.chunk_size - 300) / 700
         k_err = abs(action.top_k - 5) / 5
-        score = max(0.0, 1.0 - (size_err + k_err) / 2)
         
         #Replace score line with sigmoid scaling
         raw = 1.0 - (size_err + k_err) / 2
