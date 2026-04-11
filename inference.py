@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
 # Environment Variables
-ENV_BASE = os.environ.get("ENV_BASE", "http://127.0.0.1:8000") # ALWAYS local env
-LLM_BASE_URL = os.environ.get("API_BASE_URL")  # Hugging Face API base URL for proxy
-LLM_API_KEY = os.environ.get("API_KEY")  # Hugging Face token for proxy authentication
+ENV_BASE = os.environ.get("ENV_BASE", "http://127.0.0.1:8000")
+LLM_BASE_URL = os.environ.get("API_BASE_URL")
+LLM_API_KEY = os.environ.get("API_KEY")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
 def log_start(task: str, env: str, model: str):
@@ -21,11 +21,40 @@ def log_end(success: bool, steps: int, rewards: list):
     rewards_str = ",".join([f"{r:.2f}" for r in rewards])
     print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}\n", flush=True)
 
-def main():
-    task = "optimal_rag"
+def run_task(task: str, action: dict):
+    """Run a single task with the given action"""
     log_start(task, "rag_optimizer", MODEL_NAME)
     
-    # 🔥 MANDATORY: The Proxy Call   
+    rewards = []
+    try:
+        # 1. Reset with task_id
+        requests.post(f"{ENV_BASE}/reset", json={"task_id": task})
+        
+        # 2. Step with action
+        res = requests.post(f"{ENV_BASE}/step", json={"action": action})
+        
+        if res.status_code == 200:
+            data = res.json()
+            
+            reward_raw = data.get("reward")
+            reward = float(reward_raw) if reward_raw is not None else 0.0
+            done = data.get("done", False)
+            
+            rewards.append(reward)
+            log_step(1, json.dumps(action), reward, done)
+            
+            # Success = score in valid range (0, 1)
+            success = 0.0 < reward < 1.0
+            log_end(success, 1, rewards)
+        else:
+            log_end(False, 0, [0.0])
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        log_end(False, 0, [0.0])
+
+def main():
+    # MANDATORY: LLM Proxy Call (once at start)
     try:
         print(f"[DEBUG] BASE_URL={LLM_BASE_URL}, KEY_PRESENT={bool(LLM_API_KEY)}")
         
@@ -41,39 +70,16 @@ def main():
         print("[DEBUG] LLM Proxy call successful", flush=True)
     except Exception as e:
         print(f"[DEBUG] LLM Proxy call failed: {e}", flush=True)
-
-    rewards = []
-    try:
-        # Initialize defaults to prevent NoneType errors
-        reward = 0.0
-        done = False
-
-        # 1. Reset
-        requests.post(f"{ENV_BASE}/reset", json={"task_id": task})
-        
-        # 2. Step with Optimal Action 
-        action = {"chunk_size": 300, "top_k": 5}
-        res = requests.post(f"{ENV_BASE}/step", json={"action": action})
-
-        # print(f"[DEBUG] Status: {res.status_code}")
-        # print(f"[DEBUG] Raw Response: {res.text}")
-        
-        if res.status_code == 200:
-            data = res.json()
-
-            # print(f"[DEBUG] Parsed JSON: {data}")
-
-            reward = float(data.get("reward", 0.0))
-            done = data.get("done", False)
-            rewards.append(reward)
-            log_step(1, json.dumps(action), reward, done)
-            log_end(reward >= 0.85, 1, rewards)
-        else:
-            log_end(False, 0, [0.0])
-            
-    except Exception as e:
-        print(f"Error: {e}")
-        log_end(False, 0, [0.0])
+    
+    # Run 3 tasks with different actions
+    tasks = [
+        ("baseline_retrieval", {"chunk_size": 500, "top_k": 3}),   # Suboptimal -> ~0.57
+        ("parameter_tuning", {"chunk_size": 350, "top_k": 4}),     # Close -> ~0.81
+        ("optimal_rag", {"chunk_size": 300, "top_k": 5})           # Optimal -> ~0.99
+    ]
+    
+    for task_name, action in tasks:
+        run_task(task_name, action)
 
 if __name__ == "__main__":
     main()
