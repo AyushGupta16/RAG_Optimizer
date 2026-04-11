@@ -7,6 +7,7 @@ from openenv.core.env_server import Environment
 from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env file
+EPS = 1e-6     # Small epsilon to prevent log(0) or division issues
 
 class RagOptimizerEnvironment(Environment):
     def __init__(self):
@@ -33,7 +34,6 @@ class RagOptimizerEnvironment(Environment):
         )
         
         # 2. Return observation immediately (Satisfies POST /reset)
-        EPS = 1e-6
         return RagOptimizerObservation(
             reward=EPS,
             retrieval_score=EPS,
@@ -80,7 +80,6 @@ class RagOptimizerEnvironment(Environment):
         score = 1 / (1 + math.exp(-6 * (raw - 0.5)))
 
         # 🔒 CRITICAL: clamp to (0,1)
-        EPS = 1e-6
         score = max(EPS, min(1 - EPS, score))
 
         done = self._state.step_count >= 10 or score >= self._state.target_score

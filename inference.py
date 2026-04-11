@@ -15,10 +15,10 @@ def log_start(task: str, env: str, model: str):
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
 def log_step(step: int, action: str, reward: float, done: bool):
-    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={str(done).lower()}", flush=True)
+    print(f"[STEP] step={step} action={action} reward={reward:.6f} done={str(done).lower()}", flush=True)
 
 def log_end(success: bool, steps: int, rewards: list):
-    rewards_str = ",".join([f"{r:.2f}" for r in rewards])
+    rewards_str = ",".join([f"{r:.6f}" for r in rewards])
     print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}\n", flush=True)
 
 def run_task(task: str, action: dict):
@@ -44,7 +44,7 @@ def run_task(task: str, action: dict):
             log_step(1, json.dumps(action), reward, done)
             
             # Success = score in valid range (0, 1)
-            success = done 
+            success = done and reward > 0.85
             log_end(success, 1, rewards)
         else:
             log_end(False, 0, [0.0])
