@@ -1,15 +1,28 @@
-# RAG Optimizer Environment
+---
+title: RAG Optimizer Environment
+emoji: 🤖
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_file: server/app.py
+pinned: false
+---
+## RAG Optimizer Environment
 
-A reinforcement learning environment for optimizing Retrieval-Augmented Generation (RAG) parameters. Agents learn to select optimal `chunk_size` and `top_k` values to maximize retrieval performance.
+A reinforcement learning environment for optimizing Retrieval-Augmented
+Generation (RAG) parameters. Agents learn to select optimal `chunk_size` and
+`top_k` values to maximize retrieval performance.
 
 ## Overview
 
-This environment simulates a RAG parameter optimization task where agents must discover the optimal configuration:
+This environment simulates a RAG parameter optimization task where agents must
+discover the optimal configuration:
 
 - **Optimal chunk_size**: 300
 - **Optimal top_k**: 5
 
-The environment scores actions based on how close the selected parameters are to these optimal values.
+The environment scores actions based on how close the selected parameters are
+to these optimal values.
 
 ## Key Features
 
@@ -33,11 +46,11 @@ We define RAG tuning as:
 
 Three tasks of varying difficulty:
 
-| Task                   | Target Score | Description                             |
-| ---------------------- | ------------ | --------------------------------------- |
-| `baseline_retrieval` | 0.5          | Easy - suboptimal parameters work       |
-| `parameter_tuning`   | 0.7          | Medium - requires good parameters       |
-| `optimal_rag`        | 0.85         | Hard - requires near-optimal parameters |
+| Task | Target Score | Description |
+| ---- | ------------ | ----------- |
+| `baseline_retrieval` | 0.5 | Easy - suboptimal parameters work |
+| `parameter_tuning` | 0.7 | Medium - requires good parameters |
+| `optimal_rag` | 0.85 | Hard - requires near-optimal params |
 
 ## Action Space
 
@@ -72,29 +85,29 @@ Scores are clamped to `(0.01, 0.99)` to satisfy strict validator constraints.
 ### Setup
 
 ```bash
-# Clone repository
+### Clone repository
 git clone https://github.com/AyushGupta16/RAG_Optimizer.git
 cd RAG_Optimizer
 
-# Install dependencies
+### Install dependencies
 uv sync
 ```
 
-### For local testing only:
+### For local testing only
 
 ```python
-# Or with pip
+#### Or with pip
 pip install -r requirements.txt
 
-# Set up environment variables
+#### Set up environment variables
 cp .env.example .env
-# Edit .env with your API credentials
+#### Edit .env with your API credentials
 ```
 
 ### Environment Variables
 
 ```bash
-# Required for LLM proxy (validator checks this)
+#### Required for LLM proxy (validator checks this)
 API_BASE_URL=https://your-llm-proxy.com/v1
 API_KEY=your_api_key_here
 MODEL_NAME=gpt-4o-mini
@@ -204,12 +217,16 @@ RAG_Optimizer/
 ### Role of Each File
 
 - `server/app.py` creates the FastAPI/OpenEnv server.
-- `server/rag_optimizer_environment.py` contains the environment logic, task targets, scoring, and state persistence.
-- `server/Dockerfile` packages the environment for Hugging Face Spaces and validator execution.
+- `server/rag_optimizer_environment.py` contains the environment logic, task
+  targets, scoring, and state persistence.
+- `server/Dockerfile` packages the environment for Hugging Face Spaces and
+  validator execution.
 - `server/requirements.txt` lists runtime dependencies for server builds.
-- `inference.py` runs the benchmark tasks, calls the LLM proxy, and prints validator-compatible logs.
+- `inference.py` runs the benchmark tasks, calls the LLM proxy, and prints
+  validator-compatible logs.
 - `models.py` defines action, observation, and state schemas.
-- `client.py` provides a reusable client wrapper for interacting with the environment.
+- `client.py` provides a reusable client wrapper for interacting with the
+  environment.
 - `openenv.yaml` registers the environment and task metadata.
 - `pyproject.toml` defines package metadata and dependencies.
 - `uv.lock` locks dependency versions for reproducible builds.
@@ -227,7 +244,8 @@ class RagOptimizerEnvironment(Environment):
     _current_step_count: int = 0
 ```
 
-This ensures that episode state survives server framework instance recreation between `/reset` and `/step`.
+This ensures that episode state survives server framework instance recreation
+between `/reset` and `/step`.
 
 ### Project Structure
 
@@ -256,7 +274,8 @@ k_error = abs(top_k - 5) / 5
 raw_score = 1.0 - (size_error + k_error) / 2
 ```
 
-Scores are clamped to `(0.01, 0.99)` to satisfy validator requirements (strictly between 0 and 1).
+Scores are clamped to `(0.01, 0.99)` to satisfy validator requirements
+(strictly between 0 and 1).
 
 ## API Endpoints
 
@@ -318,14 +337,14 @@ Execute an action in the environment.
 
 The project uses the injected validator credentials:
 
-* `API_BASE_URL`
-* `API_KEY`
-* `MODEL_NAME`
+- `API_BASE_URL`
+- `API_KEY`
+- `MODEL_NAME`
 
 The proxy is called from:
 
-* `inference.py` once per task
-* `server/rag_optimizer_environment.py` during `step()`
+- `inference.py` once per task
+- `server/rag_optimizer_environment.py` during `step()`
 
 This satisfies the LLM criteria checks while keeping the environment deterministic.
 
@@ -358,15 +377,17 @@ To add a new difficulty level:
        "expert_rag": 0.95,  # New task
    }
    ```
+
 2. Update `TASK_TARGETS` in `inference.py`
+
 3. Add test case to `inference.py`:
 
-```python
-tasks = [
-    # ... existing tasks ...
-    ("expert_rag", {"chunk_size": 300, "top_k": 5}),
-]
-```
+   ```python
+   tasks = [
+       # ... existing tasks ...
+       ("expert_rag", {"chunk_size": 300, "top_k": 5}),
+   ]
+   ```
 
 ## Troubleshooting
 
