@@ -7,13 +7,10 @@ from openenv.core.env_server import Environment
 
 
 class RagOptimizerEnvironment(Environment):
-    _current_target: float = 0.85
-    _current_episode_id: str | None = None
-    _current_step_count: int = 0
+    _current_target = 0.85
+    _current_episode_id = None
+    _current_step_count = 0
 
-    # ----------------------------
-    # Task / State Utilities
-    # ----------------------------
     @classmethod
     def _get_target_for_task(cls, task_id: str | None) -> float:
         task_targets = {
@@ -37,15 +34,6 @@ class RagOptimizerEnvironment(Environment):
             target_score=cls._current_target,
         )
 
-    # ----------------------------
-    # Scoring Logic (UNCHANGED)
-    # ----------------------------
-    @staticmethod
-    def _compute_score(chunk_size: int, top_k: int) -> float:
-        size_err = abs(chunk_size - 300) / 700.0
-        k_err = abs(top_k - 5) / 5.0
-        return 1.0 - (size_err + k_err) / 2.0
-
     @staticmethod
     def _clamp_score(raw_score: float) -> float:
         if raw_score <= 0.0:
@@ -54,28 +42,6 @@ class RagOptimizerEnvironment(Environment):
             return 0.99
         return max(0.01, min(0.99, raw_score))
 
-    # ----------------------------
-    # LLM Proxy Call (isolated)
-    # ----------------------------
-    @staticmethod
-    def _call_llm_proxy() -> None:
-        try:
-            client = OpenAI(
-                base_url=os.environ["API_BASE_URL"].rstrip("/"),
-                api_key=os.environ["API_KEY"],
-            )
-            client.chat.completions.create(
-                model=os.environ.get("MODEL_NAME", "gpt-4o-mini"),
-                messages=[{"role": "user", "content": "validate"}],
-                max_tokens=1,
-            )
-            print("LLM Proxy call attempted.", flush=True)
-        except Exception as e:
-            print(f"LLM Proxy Error: {e}", flush=True)
-
-    # ----------------------------
-    # Lifecycle
-    # ----------------------------
     def __init__(self):
         self._state = self._build_state()
 
@@ -102,19 +68,34 @@ class RagOptimizerEnvironment(Environment):
         )
 
     def step(self, action: RagOptimizerAction, **kwargs) -> RagOptimizerObservation:
-        # Restore and update state
         self._state = self._build_state()
+
         self._state.step_count += 1
         self.__class__._restore_shared_state(self._state)
 
-        # Required proxy call (validator)
-        self._call_llm_proxy()
+        api_key = os.environ["API_KEY"]
+        base_url = os.environ["API_BASE_URL"]
+        model_name = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
-        # Compute score
-        raw_score = self._compute_score(action.chunk_size, action.top_k)
+        try:
+            client = OpenAI(
+                base_url=base_url.rstrip("/"),
+                api_key=api_key,
+            )
+            client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": "validate"}],
+                max_tokens=1,
+            )
+            print("LLM Proxy call attempted.", flush=True)
+        except Exception as e:
+            print(f"LLM Proxy Error: {e}", flush=True)
+
+        size_err = abs(action.chunk_size - 300) / 700.0
+        k_err = abs(action.top_k - 5) / 5.0
+        raw_score = 1.0 - (size_err + k_err) / 2.0
         score = self._clamp_score(raw_score)
 
-        # Done condition (UNCHANGED)
         done = self._state.step_count >= 10 or score >= self._state.target_score
 
         print(
