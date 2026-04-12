@@ -28,43 +28,35 @@ Usage:
     python -m server.app
 """
 
+import os
+import sys
+
 try:
     from openenv.core.env_server.http_server import create_app
 except Exception as e:  # pragma: no cover
     raise ImportError(
-        "openenv is required for the web interface. Install dependencies with '\n    uv sync\n'"
+        "openenv is required for the web interface. Install dependencies with '\\n    uv sync\\n'"
     ) from e
 
-import sys
-import os
+# Add project root to path so root-level imports work consistently
+ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT_PATH not in sys.path:
+    sys.path.append(ROOT_PATH)
 
-# This adds the root 'rag_optimizer' folder to the path
-root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if root_path not in sys.path:
-    sys.path.append(root_path)
+from models import RagOptimizerAction, RagOptimizerObservation
+from server.rag_optimizer_environment import RagOptimizerEnvironment
 
-try:
-    from models import RagOptimizerAction, RagOptimizerObservation
-    from server.rag_optimizer_environment import RagOptimizerEnvironment
-except ModuleNotFoundError:
-    from models import RagOptimizerAction, RagOptimizerObservation
-    from server.rag_optimizer_environment import RagOptimizerEnvironment
-
-
-# Create the app with web interface and README integration
 app = create_app(
     RagOptimizerEnvironment,
     RagOptimizerAction,
     RagOptimizerObservation,
     env_name="rag_optimizer",
-    max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
+    max_concurrent_envs=1,
 )
 
 
 def main():
-    """
-    Entry point for direct execution via uv run or python -m.
-    """
+    """Run the FastAPI server."""
     import argparse
     import uvicorn
 
