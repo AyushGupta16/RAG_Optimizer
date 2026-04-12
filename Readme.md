@@ -33,8 +33,8 @@ We define RAG tuning as:
 
 Three tasks of varying difficulty:
 
-| Task                 | Target Score | Description                             |
-|----------------------|--------------|-----------------------------------------|
+| Task                   | Target Score | Description                             |
+| ---------------------- | ------------ | --------------------------------------- |
 | `baseline_retrieval` | 0.5          | Easy - suboptimal parameters work       |
 | `parameter_tuning`   | 0.7          | Medium - requires good parameters       |
 | `optimal_rag`        | 0.85         | Hard - requires near-optimal parameters |
@@ -78,7 +78,11 @@ cd RAG_Optimizer
 
 # Install dependencies
 uv sync
+```
 
+### For local testing only:
+
+```python
 # Or with pip
 pip install -r requirements.txt
 
@@ -212,25 +216,18 @@ RAG_Optimizer/
 - `.env` is for local development only and should not be committed with secrets.
 - `outputs/` stores local run artifacts if generated.
 
-### LLM Proxy Integration
+### State Persistence
 
-To satisfy OpenEnv validation requirements:
+The environment uses class-level variables to persist state across HTTP requests:
 
-- Each task triggers at least one LLM API call
-- Uses injected environment variables:
-  - `API_BASE_URL`
-  - `API_KEY`
+```py
+class RagOptimizerEnvironment(Environment):
+    _current_target: float = 0.85
+    _current_episode_id: Optional[str] = None
+    _current_step_count: int = 0
+```
 
-This ensures compliance with the "LLM Criteria Check".
-
-### State Management
-
-OpenEnv may recreate environment instances between calls.
-
-To maintain consistency:
-
-- Shared state is stored at the class level
-- Ensures task targets persist across `/reset` and `/step`
+This ensures that episode state survives server framework instance recreation between `/reset` and `/step`.
 
 ### Project Structure
 
@@ -260,19 +257,6 @@ raw_score = 1.0 - (size_error + k_error) / 2
 ```
 
 Scores are clamped to `(0.01, 0.99)` to satisfy validator requirements (strictly between 0 and 1).
-
-### State Persistence
-
-The environment uses class-level variables to persist state across HTTP requests:
-
-```python
-class RagOptimizerEnvironment(Environment):
-    _current_target: float = 0.85
-    _current_episode_id: Optional[str] = None
-    _current_step_count: int = 0
-```
-
-This ensures that episode state survives server framework instance recreation.
 
 ## API Endpoints
 
@@ -330,6 +314,21 @@ Execute an action in the environment.
 }
 ```
 
+## LLM Proxy Integration
+
+The project uses the injected validator credentials:
+
+* `API_BASE_URL`
+* `API_KEY`
+* `MODEL_NAME`
+
+The proxy is called from:
+
+* `inference.py` once per task
+* `server/rag_optimizer_environment.py` during `step()`
+
+This satisfies the LLM criteria checks while keeping the environment deterministic.
+
 ## Development
 
 ### Running Tests
@@ -351,17 +350,16 @@ To add a new difficulty level:
 
 1. Update `TASK_TARGETS` in `rag_optimizer_environment.py`:
 
-```python
-TASK_TARGETS = {
-    "baseline_retrieval": 0.5,
-    "parameter_tuning": 0.7,
-    "optimal_rag": 0.85,
-    "expert_rag": 0.95,  # New task
-}
-```
-
-1. Update `TASK_TARGETS` in `inference.py`
-2. Add test case to `inference.py`:
+   ```python
+   TASK_TARGETS = {
+       "baseline_retrieval": 0.5,
+       "parameter_tuning": 0.7,
+       "optimal_rag": 0.85,
+       "expert_rag": 0.95,  # New task
+   }
+   ```
+2. Update `TASK_TARGETS` in `inference.py`
+3. Add test case to `inference.py`:
 
 ```python
 tasks = [
