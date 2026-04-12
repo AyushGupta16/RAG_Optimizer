@@ -1,6 +1,6 @@
 # RAG Optimizer Environment
 
-### Reinforcement Learning for Retrieval-Augmented Generation (RAG) Tuning
+## Reinforcement Learning for Retrieval-Augmented Generation (RAG) Tuning
 
 > A production-style RL environment for optimizing retrieval parameters (`chunk_size`, `top_k`) in RAG pipelines using reward-driven learning.
 
@@ -135,9 +135,9 @@ Open: [http://localhost:8000/docs](http://localhost:8000/docs)
 ## Reinforcement Learning Perspective
 
 | Component | Mapping                         |
-| --------- | ------------------------------- |
+|-----------|---------------------------------|
 | State     | Current retrieval configuration |
-| Action    | (`chunk_size`,`top_k`)      |
+| Action    | (`chunk_size`,`top_k`)          |
 | Reward    | Retrieval quality score         |
 | Episode   | Sequence of tuning steps        |
 
