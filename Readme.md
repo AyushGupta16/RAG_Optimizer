@@ -1,13 +1,6 @@
----
-title: RAG Optimizer Environment
-emoji: 🤖
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_file: server/app.py
-pinned: false
----
-## RAG Optimizer Environment
+# RAG Optimizer Environment
+
+A reinforcement learning environment for optimizing Retrieval-Augmented
 
 A reinforcement learning environment for optimizing Retrieval-Augmented
 Generation (RAG) parameters. Agents learn to select optimal `chunk_size` and
@@ -46,11 +39,11 @@ We define RAG tuning as:
 
 Three tasks of varying difficulty:
 
-| Task | Target Score | Description |
-| ---- | ------------ | ----------- |
-| `baseline_retrieval` | 0.5 | Easy - suboptimal parameters work |
-| `parameter_tuning` | 0.7 | Medium - requires good parameters |
-| `optimal_rag` | 0.85 | Hard - requires near-optimal params |
+| Task                   | Target Score | Description                         |
+| ---------------------- | ------------ | ----------------------------------- |
+| `baseline_retrieval` | 0.5          | Easy - suboptimal parameters work   |
+| `parameter_tuning`   | 0.7          | Medium - requires good parameters   |
+| `optimal_rag`        | 0.85         | Hard - requires near-optimal params |
 
 ## Action Space
 
@@ -377,9 +370,7 @@ To add a new difficulty level:
        "expert_rag": 0.95,  # New task
    }
    ```
-
 2. Update `TASK_TARGETS` in `inference.py`
-
 3. Add test case to `inference.py`:
 
    ```python
